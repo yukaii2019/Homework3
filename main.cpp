@@ -1,6 +1,8 @@
 #include "mbed.h"
 #include "fsl_port.h"
 #include "fsl_gpio.h"
+#include "math.h"
+#define PI acos(-1)
 #define UINT14_MAX        16383
 // FXOS8700CQ I2C address
 #define FXOS8700CQ_SLAVE_ADDR0 (0x1E<<1) // with pins SA0=0, SA1=0
@@ -58,6 +60,14 @@ void FXOS8700CQ_readRegs(int addr, uint8_t * data, int len) {
 void FXOS8700CQ_writeRegs(uint8_t * data, int len) {
    i2c.write(m_addr, (char *)data, len);
 }
+int tilt_over_45(float x,float y,float z){
+    float angle = atan(z/sqrt(x*x+y*y))*180/PI;
+    if(angle<=45){
+        return 1;
+    }
+    else 
+        return 0;
+}
 void accelerometer(){
     pc.baud(115200);
    uint8_t who_am_i, data[2], res[6];
@@ -104,17 +114,18 @@ void accelerometer(){
         wait(0.1);
         
    }
-    for(int i=0;i<100;i++){
-        if(position[i].z<=0.5){
+        for(int i=0;i<100;i++){
+        /*if(position[i].z<=0.5){
             tilt_than_45[i] = 1;
         }
         else {
             tilt_than_45[i] = 0;
-        }
-        pc.printf("%f\r\n",position[i].x);
-        pc.printf("%f\r\n",position[i].y);
-        pc.printf("%f\r\n",position[i].z);
-        pc.printf("%d\r\n",tilt_than_45[i]);
+        }*/
+            tilt_than_45[i] = tilt_over_45(position[i].x,position[i].y,position[i].z);
+            pc.printf("%f\r\n",position[i].x);
+            pc.printf("%f\r\n",position[i].y);
+            pc.printf("%f\r\n",position[i].z);
+            pc.printf("%d\r\n",tilt_than_45[i]);
     }  
 }
 
